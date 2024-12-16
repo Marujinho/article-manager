@@ -47,6 +47,7 @@ http://localhost:8000
 2. **A scheduled job runs daily to continue seeding the database (for demonstration purposes only; this is not required for testing functionality).Development Mode:**
 3. **The database is destroyed and rebuilt every time the containers are restarted.**
 4. **To make API requests, you need a personal_access_token. Generate this token by registering at the /register endpoint. Use the token in your request headers: Authorization: Bearer {token}**
+5. **The payloads can be found in the file article_manager_doc.json and it can be imported in any postman workspace**
 
 
 
