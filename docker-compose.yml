@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app
+    container_name: laravel-app
+    volumes:
+      - .:/var/www
+    depends_on:
+      - mysql
+      - redis
+    command: >
+      sh -c "
+      chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache &&
+      chmod -R 775 /var/www/storage /var/www/bootstrap/cache &&
+      until nc -z mysql 3306; do
+        echo 'Waiting for MySQL to be ready...';
+        sleep 3;
+      done &&
+      php artisan migrate:fresh --seed --force &&
+      php artisan app:seed-articles-command &&
+      php-fpm
+      "
+
+  webserver:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - 8000:80
+    volumes:
+      - .:/var/www
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+
+  mysql:
+    image: mysql:8.0
+    container_name: laravel-mysql
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  redis:
+    image: redis:alpine
+    container_name: laravel-redis
+    ports:
+      - 6380:6379
+
+volumes:
+  mysql_data:
